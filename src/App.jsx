@@ -64,9 +64,7 @@ export default function App() {
           rotation-x={-Math.PI / 2}
           material-color={0x00ff00}
         />
-        <Suspense fallback={null}>
-          <Curve1 rotationValue={rotation} />
-        </Suspense>
+        <Curve1 rotationValue={rotation} />
       </Canvas>
     </>
   );
