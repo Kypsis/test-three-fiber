@@ -1,48 +1,16 @@
-import { Suspense, useRef, useEffect } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Plane, useGLTF } from "@react-three/drei";
-import {
-  LineBasicMaterial,
-  BufferGeometry,
-  BufferAttribute,
-  Line,
-} from "three";
+import { useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, PerspectiveCamera, useGLTF } from "@react-three/drei";
 import { Leva, useControls } from "leva";
-
-const models = {
-  curve1: "models/curve1.glb",
-  // ...rest of model paths in public/models
-};
-
-function Curve1({ rotationValue }) {
-  const { scene } = useThree();
-  const gltf = useGLTF(models.curve1);
-
-  useEffect(() => {
-    const mesh = gltf.scene.children[0];
-    const geometry = mesh.geometry.clone();
-    geometry.applyMatrix4(mesh.matrixWorld);
-
-    const vertices = geometry.attributes.position.array;
-    const lineGeometry = new BufferGeometry();
-    lineGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
-
-    const material = new LineBasicMaterial({ color: 0xff0000 });
-    const lineObject = new Line(lineGeometry, material);
-    lineObject.position.copy(mesh.position);
-    lineObject.rotation.copy(mesh.rotation);
-    lineObject.rotateY((Math.PI / 180) * rotationValue);
-
-    scene.add(lineObject);
-
-    return () => scene.remove(lineObject); // cleanup to remove from scene on unmount
-  }, [gltf, scene, rotationValue]);
-
-  return null;
-}
+import { Curve1 } from "./components/Curve1";
+import { Lights } from "./components/Lights";
+import { Scene } from "./components/Scene";
+import { PathAndParticles } from "./components/PathAndParticles";
 
 export default function App() {
   const ref = useRef();
+
+  const [lightVisible, setLightVisible] = useState(true);
 
   const { rotation } = useControls({
     rotation: {
@@ -56,19 +24,29 @@ export default function App() {
   return (
     <>
       <Leva oneLineLabels />
-      <Canvas camera={{ position: [0, 5, 20], fov: 45, near: 1, far: 200 }}>
-        <OrbitControls ref={ref} />
-        <ambientLight />
-        <Plane
-          args={[10, 10]}
-          rotation-x={-Math.PI / 2}
-          material-color={0x00ff00}
+      <Canvas shadows>
+        <PerspectiveCamera
+          makeDefault
+          position={[0, 0, 8]}
+          fov={75}
+          near={1}
+          far={1000}
         />
+        <OrbitControls ref={ref} />
+        <Lights lightVisible={lightVisible} />
+        <Scene setLightVisible={setLightVisible} />
+        <PathAndParticles />
         <Curve1 rotationValue={rotation} />
       </Canvas>
     </>
   );
 }
+
+export const models = {
+  curve1: "models/curve1.glb",
+  meshes: "models/meshes.glb",
+  // ...rest of model paths in public/models
+};
 
 // Silently pre-load all models
 Object.values(models).forEach(useGLTF.preload);
